@@ -27,11 +27,11 @@ async function coletarTipoEnsino() {
     }
 }
 
-async function coletarMaterias(ensino, serie) {
+async function coletarMaterias(ensino, serie, bimestre) {
     try {
         
         // LINK PARA PEGAR MATÉRIAS
-        const url = `https://repositorio.educacao.sp.gov.br/MidiasCMSP/ComponenteCurricular?IsMaterial=true&CodigoTipoEnsino=${ensino}&CodigoSerie=${serie}`;
+        const url = `https://repositorio.educacao.sp.gov.br/MidiasCMSP/ComponenteCurricular?IsMaterial=true&CodigoTipoEnsino=${ensino}&CodigoSerie=${serie}&CodigoBimestre=${bimestre}`;
 
         const response = await fetch(url);
 
@@ -47,14 +47,14 @@ async function coletarMaterias(ensino, serie) {
     }
 }
 
-async function coletarPDF(ensino, serie, materia) {
+async function coletarPDF(ensino, serie, materia, bimestre) {
   try {
     const browser = await puppeteer.launch({heandless: false});
     // HEADLESS = FALSE ( VISIVEL )
     // HEADLESS = TRUE ( INVISIVEL )
 
     const page = await browser.newPage();
-    await page.goto(`https://repositorio.educacao.sp.gov.br/MidiasCMSP/BuscarMateriais?AnoLetivo=2024&CodigoTipoEnsino=${ensino}&CodigoSerie=${serie}&CodigoBimestre=1&CodigoComponenteCurricular=${materia}&UserID=284769726&UserName=VITOR%20CUST%C3%93DIO%20DA%20SILVA&Login=00001110057556SP&PerfilTipo=Aluno&DescricaoPerfil=`);
+    await page.goto(`https://repositorio.educacao.sp.gov.br/MidiasCMSP/BuscarMateriais?AnoLetivo=2024&CodigoTipoEnsino=${ensino}&CodigoSerie=${serie}&CodigoBimestre=${bimestre}&CodigoComponenteCurricular=${materia}&UserID=284769726&UserName=VITOR%20CUST%C3%93DIO%20DA%20SILVA&Login=00001110057556SP&PerfilTipo=Aluno&DescricaoPerfil=`);
 
     await page.waitForTimeout(5000);
 

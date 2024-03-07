@@ -15,6 +15,15 @@
         <option value="">Selecione uma série</option>
     </select>
 
+
+    <select id="selectBimestre">
+        <option value="">Selecione um bimestre</option>
+        <option value="1">1º Bimestre</option>
+        <option value="2">2º Bimestre</option>
+        <option value="3">3º Bimestre</option>
+        <option value="4">4º Bimestre</option>
+    </select>
+
     <select id="selectMaterias">
         <option value="">Selecione uma matéria</option>
     </select>
@@ -36,7 +45,7 @@
         const selectElement = document.getElementById('selectTipoEnsino');
         selectElement.innerHTML = '<option value="">Selecione um tipo de ensino</option>';
 
-        fetch('http://localhost:3000/coletarTipoEnsino')
+        fetch('http://localhost:3001/coletarTipoEnsino')
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
@@ -79,8 +88,13 @@
         const selectSerie = document.getElementById('selectSeries');
         const optionSelecionadoSerie = selectSerie.options[selectSerie.selectedIndex];
         const serie = optionSelecionadoSerie.value;
+
+        const selectBimestre = document.getElementById('selectBimestre');
+        const optionSelecionadoBimestre = selectBimestre.options[selectBimestre.selectedIndex];
+        const bimestre = optionSelecionadoBimestre.value;
         
-        fetch(`http://localhost:3000/coletarMaterias?ensino=${tipoEnsino}&serie=${serie}`)
+        
+        fetch(`http://localhost:3001/coletarMaterias?ensino=${tipoEnsino}&serie=${serie}&bimestre=${bimestre}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
@@ -176,13 +190,18 @@
         const optionSelecionadoSerie = selectSerie.options[selectSerie.selectedIndex];
         const serie = optionSelecionadoSerie.value;
 
-        if (!tipoEnsino || !idMateria) {
+        const selectBimestre = document.getElementById('selectBimestre');
+        const optionSelecionadoBimestre = selectBimestre.options[selectBimestre.selectedIndex];
+        const bimestre = optionSelecionadoBimestre.value;
+        
+
+        if (!tipoEnsino || !idMateria || !bimestre || !serie) {
            alert('Por favor, selecione um tipo de ensino e uma matéria antes de enviar.');
             return;
         }
 
         try {
-            const jsonMaterias = await fetch(`http://localhost:3000/coletarPDF?ensino=${tipoEnsino}&materia=${idMateria}&serie=${serie}`)
+            const jsonMaterias = await fetch(`http://localhost:3001/coletarPDF?ensino=${tipoEnsino}&materia=${idMateria}&serie=${serie}&bimestre=${bimestre}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
@@ -195,9 +214,9 @@
             
             await db.collection('controle')
                 .doc('pdfs')
-                .collection('pdfs')
+                .collection(`${bimestre}º Bimestre`)
                 .doc(ensino)
-                .collection(serie)
+                .collection(`${serie}º Ano`)
                 .doc(materia)
                 .set({
                     nome: materia,
@@ -222,9 +241,13 @@
     const selectSerie = document.getElementById('selectSeries');
     const optionSelecionadoSerie = selectSerie.options[selectSerie.selectedIndex];
     const serie = optionSelecionadoSerie.value;
-
-    if (!tipoEnsino) {
-        alert('Por favor, selecione um tipo de ensino antes de enviar.');
+    
+    const selectBimestre = document.getElementById('selectBimestre');
+    const optionSelecionadoBimestre = selectBimestre.options[selectBimestre.selectedIndex];
+    const bimestre = optionSelecionadoBimestre.value;
+        
+    if (!tipoEnsino || !bimestre || !serie) {
+        alert('Por favor, selecione um tipo de ensino e uma matéria antes de enviar.');
         return;
     }
 
@@ -240,7 +263,7 @@
         }
 
         try {
-            const jsonMaterias = await fetch(`http://localhost:3000/coletarPDF?ensino=${tipoEnsino}&materia=${idMateria}&serie=${serie}`)
+            const jsonMaterias = await fetch(`http://localhost:3001/coletarPDF?ensino=${tipoEnsino}&materia=${idMateria}&serie=${serie}&bimestre=${bimestre}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
@@ -250,9 +273,9 @@
 
             await db.collection('controle')
                 .doc('pdfs')
-                .collection('pdfs')
+                .collection(`${bimestre}º Bimestre`)
                 .doc(ensino)
-                .collection(serie)
+                .collection(`${serie}º Ano`)
                 .doc(materia)
                 .set({
                     nome: materia,

@@ -3,7 +3,7 @@ const puppeteerCode = require('./index.js');
 const cors = require('cors');
 
 const app = express();
-const port = 3000;
+const port = 3001;
 app.use(cors());
 
 
@@ -11,8 +11,9 @@ app.get('/coletarPDF', async (req, res) => {
     const ensino = req.query.ensino;
     const materia = req.query.materia;
     const serie = req.query.serie;
+    const bimestre = req.query.bimestre;
     try {
-      const coleta = await puppeteerCode.coletarPDF(ensino, serie, materia);
+      const coleta = await puppeteerCode.coletarPDF(ensino, serie, materia, bimestre);
       res.json(coleta);
     } catch (error) {
       res.status(500).send('Erro interno do servidor');
@@ -22,9 +23,9 @@ app.get('/coletarPDF', async (req, res) => {
 app.get('/coletarMaterias', async (req, res) => {
   const ensino = req.query.ensino;
   const serie = req.query.serie;
-  console.log(serie)
+  const bimestre = req.query.bimestre;
     try {
-      const materias = await puppeteerCode.coletarMaterias(ensino, serie);
+      const materias = await puppeteerCode.coletarMaterias(ensino, serie, bimestre);
       res.json(materias);
     } catch (error) {
       res.status(500).send('Erro interno do servidor');

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositório CMSP - TecVit</title>
+</head>
+<body>
+    
+    <select onchange="adicionarSeries(this.value)" id="selectTipoEnsino">
+        <option value="">Selecione um tipo de ensino</option>
+    </select>
+
+    <select onchange="adicionarMaterias(this.value)" id="selectSeries">
+        <option value="">Selecione uma série</option>
+    </select>
+
+    <select id="selectMaterias">
+        <option value="">Selecione uma matéria</option>
+    </select>
+
+    <button onclick="enviarPDF()">Enviar</button>
+    <button onclick="enviarPDFsParaTodasAsMaterias()">Enviar Todas Materias</button>
+
+</body>
+
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-storage-compat.js"></script>
+
+
+<script>
+
+    async function adicionarTipoEnsino() {
+        // Obtém o elemento select
+        const selectElement = document.getElementById('selectTipoEnsino');
+        selectElement.innerHTML = '<option value="">Selecione um tipo de ensino</option>';
+
+        fetch('http://localhost:3000/coletarTipoEnsino')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Tipos de ensinos lidos com sucesso!');
+
+                // Você pode acessar cada objeto individualmente
+                data.forEach(item => {
+                    const nome = item.NM_TIPO_ENSINO;
+                    const id = item.CD_TIPO_ENSINO;
+                    const newOption = document.createElement('option');
+                    newOption.value = id;
+                    newOption.setAttribute('data-value', nome);
+                    newOption.text = nome;
+                    selectElement.add(newOption);
+                    
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao processar a solicitação:', error);
+            });
+    }
+
+    adicionarTipoEnsino();
+
+
+    async function adicionarMaterias() {
+        // Obtém o elemento select
+        const selectElement = document.getElementById('selectMaterias');
+        selectElement.innerHTML = '<option value="">Selecione uma matéria</option>';
+        
+        const selectEnsino = document.getElementById('selectTipoEnsino');
+        const optionSelecionado = selectEnsino.options[selectEnsino.selectedIndex];
+        const ensino = optionSelecionado.getAttribute('data-value');
+        const tipoEnsino = optionSelecionado.value;
+
+        const selectSerie = document.getElementById('selectSeries');
+        const optionSelecionadoSerie = selectSerie.options[selectSerie.selectedIndex];
+        const serie = optionSelecionadoSerie.value;
+        
+        fetch(`http://localhost:3000/coletarMaterias?ensino=${tipoEnsino}&serie=${serie}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Aqui, 'data' é o array de objetos retornado pela API
+                console.log('Matérias lidas com sucesso!');
+
+                // Você pode acessar cada objeto individualmente
+                data.forEach(item => {
+                    const nome = item.NOME;
+                    const id = item.CD_COMPONENTE;
+                    const newOption = document.createElement('option');
+                    newOption.value = id;
+                    newOption.text = nome;
+                    selectElement.add(newOption);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao processar a solicitação:', error);
+            });
+    }
+
+
+    async function adicionarSeries() {
+        // Obtém o elemento select
+        const selectElement = document.getElementById('selectSeries');
+        selectElement.innerHTML = '<option value="">Selecione uma série</option>';
+        
+        const selectEnsino = document.getElementById('selectTipoEnsino');
+        const optionSelecionado = selectEnsino.options[selectEnsino.selectedIndex];
+        const ensino = optionSelecionado.getAttribute('data-value');
+        const tipoEnsino = optionSelecionado.value;
+        
+        if (ensino === 'ENSINO FUNDAMENTAL DE 9 ANOS - ANOS FINAIS') {
+            for (var i = 6; i <= 9; i++) {
+                const newOption = document.createElement('option');
+                newOption.value = i;
+                newOption.text = `${i}º Ano`;
+                selectElement.add(newOption);    
+            }
+        } else if (ensino === 'ENSINO FUNDAMENTAL DE 9 ANOS - ANOS INICIAIS') {
+            for (var i = 1; i <= 5; i++) {
+                const newOption = document.createElement('option');
+                newOption.value = i;
+                newOption.text = `${i}º Ano`;
+                selectElement.add(newOption);    
+            }
+        } else if (ensino === 'ENSINO MEDIO') {
+            for (var i = 1; i <= 3; i++) {
+                const newOption = document.createElement('option');
+                newOption.value = i;
+                newOption.text = `${i}º Ano`;
+                selectElement.add(newOption);    
+            }
+        }
+
+        
+    }
+
+
+    // FIREBASE
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA6QbU8bld_SBOOm69qPO1Pe35rC9v3XQY",
+        authDomain: "repositorio-cmsp.firebaseapp.com",
+        projectId: "repositorio-cmsp",
+        storageBucket: "repositorio-cmsp.appspot.com",
+        messagingSenderId: "122130648076",
+        appId: "1:122130648076:web:aa1438433f73e1f183b229"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function enviarPDF() {
+
+        // TIPO DE ENSINO
+        const selectEnsino = document.getElementById('selectTipoEnsino');
+        const optionSelecionado = selectEnsino.options[selectEnsino.selectedIndex];
+        const ensino = optionSelecionado.getAttribute('data-value');
+        const tipoEnsino = optionSelecionado.value;
+        
+        // MATERIA
+        const selectMaterias = document.getElementById('selectMaterias');
+        const optionSelecionadoMaterias = selectMaterias.options[selectMaterias.selectedIndex];
+        const idMateria = optionSelecionadoMaterias.value;
+        const materia = optionSelecionadoMaterias.textContent;
+        
+        const selectSerie = document.getElementById('selectSeries');
+        const optionSelecionadoSerie = selectSerie.options[selectSerie.selectedIndex];
+        const serie = optionSelecionadoSerie.value;
+
+        if (!tipoEnsino || !idMateria) {
+           alert('Por favor, selecione um tipo de ensino e uma matéria antes de enviar.');
+            return;
+        }
+
+        try {
+            const jsonMaterias = await fetch(`http://localhost:3000/coletarPDF?ensino=${tipoEnsino}&materia=${idMateria}&serie=${serie}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
+                }
+                const resposta = response.json();
+                return resposta;
+            }).then((data) => {
+                return JSON.stringify(data);
+            })
+            
+            await db.collection('controle')
+                .doc('pdfs')
+                .collection('pdfs')
+                .doc(ensino)
+                .collection(serie)
+                .doc(materia)
+                .set({
+                    nome: materia,
+                    json: jsonMaterias,
+                }).then((res) => {
+                    alert('enviado com sucesso!');
+                })
+
+            console.log(`PDF de ${materia} enviado com sucesso!`);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async function enviarPDFsParaTodasAsMaterias() {
+    const selectEnsino = document.getElementById('selectTipoEnsino');
+    const selectMaterias = document.getElementById('selectMaterias');
+
+    const tipoEnsino = selectEnsino.value;
+    const ensino = selectEnsino.options[selectEnsino.selectedIndex].getAttribute('data-value');
+
+    const selectSerie = document.getElementById('selectSeries');
+    const optionSelecionadoSerie = selectSerie.options[selectSerie.selectedIndex];
+    const serie = optionSelecionadoSerie.value;
+
+    if (!tipoEnsino) {
+        alert('Por favor, selecione um tipo de ensino antes de enviar.');
+        return;
+    }
+
+    const optionsMaterias = selectMaterias.options;
+
+    for (let i = 0; i < optionsMaterias.length; i++) {
+        const idMateria = optionsMaterias[i].value;
+        const materia = optionsMaterias[i].textContent;
+
+        if (!idMateria) {
+            // Ignora a opção "Selecione uma matéria"
+            continue;
+        }
+
+        try {
+            const jsonMaterias = await fetch(`http://localhost:3000/coletarPDF?ensino=${tipoEnsino}&materia=${idMateria}&serie=${serie}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro na solicitação: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                });
+
+            await db.collection('controle')
+                .doc('pdfs')
+                .collection('pdfs')
+                .doc(ensino)
+                .collection(serie)
+                .doc(materia)
+                .set({
+                    nome: materia,
+                    json: jsonMaterias,
+                });
+
+            console.log(`PDF de ${materia} enviado com sucesso!`);
+        } catch (error) {
+            console.error(`Erro ao enviar PDF para ${materia}:`, error);
+        }
+    }
+
+    alert('Todos os PDFs foram enviados com sucesso!');
+}
+
+
+
+</script>
+
+</html>
